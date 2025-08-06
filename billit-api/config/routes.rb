@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  namespace :api do
+    get "clients/index"
+  end
 # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   namespace :api do
     devise_for :users,
@@ -6,6 +9,7 @@ Rails.application.routes.draw do
         registrations: 'api/users/registrations',
         sessions: 'api/users/sessions'
       }
+    resources :clients, only: [:index, :show, :create, :update, :destroy]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
