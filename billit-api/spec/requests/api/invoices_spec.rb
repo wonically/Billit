@@ -2,32 +2,37 @@ require 'rails_helper'
 
 RSpec.describe 'Api::Invoices', type: :request do
   let(:user) { create(:user) }
-  let(:auth_headers) do
-    token = Warden::JWTAuth::UserEncoder.new.call(user, :user, nil).first
-    { 'Authorization' => "Bearer #{token}" }
-  end
-  let!(:client) { create(:client, user: user) }
+  let(:client) { create(:client, user: user) }
   let!(:invoices) { create_list(:invoice, 2, user: user, client: client) }
   let(:invoice) { invoices.first }
+  let!(:other_invoice) { create(:invoice) }
+
+  before { sign_in user }
 
   describe 'GET /api/invoices' do
-    it 'returns user invoices' do
-      get '/api/invoices', headers: auth_headers
+    it 'returns only current_user invoices' do
+      get '/api/invoices'
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body).size).to eq(2)
+      ids = json_body.map { |inv| inv['id'] }
+      expect(ids).to match_array(invoices.map(&:id))
+      expect(ids).not_to include(other_invoice.id)
     end
   end
 
   describe 'GET /api/invoices/:id' do
-    it 'returns a single invoice' do
-      get "/api/invoices/#{invoice.id}", headers: auth_headers
+    let!(:line_items) { create_list(:line_item, 2, invoice: invoice) }
+
+    it 'returns invoice with client and line_items' do
+      get "/api/invoices/#{invoice.id}"
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)['id']).to eq(invoice.id)
+      expect(json_body['id']).to eq(invoice.id)
+      expect(json_body['client']).to eq(client.name)
+      expect(json_body['line_items'].size).to eq(2)
     end
   end
 
   describe 'POST /api/invoices' do
-    it 'creates an invoice with line items' do
+    it 'creates invoice with nested line_items' do
       invoice_params = {
         client_id: client.id,
         issue_date: Date.today,
@@ -42,25 +47,38 @@ RSpec.describe 'Api::Invoices', type: :request do
         ]
       }
       expect {
-        post '/api/invoices', params: { invoice: invoice_params }, headers: auth_headers
+        post '/api/invoices', params: { invoice: invoice_params }
       }.to change(user.invoices, :count).by(1)
       expect(response).to have_http_status(:created)
-      expect(JSON.parse(response.body)['note']).to eq('Test invoice')
+      expect(json_body['note']).to eq('Test invoice')
+      expect(json_body['line_items'].size).to eq(1)
+      expect(json_body['line_items'][0]['description']).to eq('Item 1')
     end
   end
 
   describe 'PATCH /api/invoices/:id' do
-    it 'updates an invoice' do
-      patch "/api/invoices/#{invoice.id}", params: { invoice: { note: 'Updated note' } }, headers: auth_headers
+    let!(:line_item) { create(:line_item, invoice: invoice, description: 'Old') }
+
+    it 'updates invoice and its line_items' do
+      patch "/api/invoices/#{invoice.id}", params: {
+        invoice: {
+          note: 'Updated note',
+          line_items_attributes: [
+            { id: line_item.id, description: 'Updated', quantity: 3, unit_price: 30.0 }
+          ]
+        }
+      }
       expect(response).to have_http_status(:ok)
       expect(invoice.reload.note).to eq('Updated note')
+      expect(invoice.line_items.first.description).to eq('Updated')
+      expect(invoice.line_items.first.quantity).to eq(3)
     end
   end
 
   describe 'DELETE /api/invoices/:id' do
-    it 'deletes an invoice' do
+    it 'deletes invoice' do
       expect {
-        delete "/api/invoices/#{invoice.id}", headers: auth_headers
+        delete "/api/invoices/#{invoice.id}"
       }.to change(user.invoices, :count).by(-1)
       expect(response).to have_http_status(:no_content)
     end
