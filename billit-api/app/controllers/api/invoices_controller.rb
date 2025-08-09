@@ -12,12 +12,25 @@ class Api::InvoicesController < ApplicationController
   end
 
   def create
+    invoice = current_user.invoices.build(invoice_params)
+    if invoice.save
+      render json: invoice, serializer: InvoiceSerializer, status: :created
+    else
+      render json: { errors: invoice.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   def update
+    if @invoice.update(invoice_params)
+      render json: @invoice, serializer: InvoiceSerializer
+    else
+      render json: { errors: @invoice.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   def destroy
+    @invoice.destroy
+    head :no_content
   end
 
   private
