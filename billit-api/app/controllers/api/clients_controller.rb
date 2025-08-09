@@ -2,17 +2,17 @@ class Api::ClientsController < ApplicationController
   before_action :set_client, only: [:show, :update, :destroy]
 
   def index
-    render json: current_user.clients
+    render json: current_user.clients, each_serializer: ClientSerializer
   end
 
   def show
-    render json: @client
+    render json: @client, serializer: ClientSerializer
   end
 
   def create
     client = current_user.clients.build(client_params)
     if client.save
-      render json: client, status: :created
+      render json: client, serializer: ClientSerializer, status: :created
     else
       render json: { errors: client.errors.full_messages }, status: :unprocessable_entity
     end
@@ -20,7 +20,7 @@ class Api::ClientsController < ApplicationController
 
   def update
     if @client.update(client_params)
-      render json: @client
+      render json: @client, serializer: ClientSerializer
     else
       render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
     end
