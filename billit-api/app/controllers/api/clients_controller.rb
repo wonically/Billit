@@ -14,23 +14,23 @@ before_action :require_admin, only: [:create, :update, :destroy]
   def create
     client = current_user.clients.build(client_params)
     if client.save
-      render json: client, serializer: ClientSerializer, status: :created
+      render json: client, serializer: ClientSerializer, status: 201
     else
-      render json: { errors: client.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: client.errors.full_messages.join(', ') }, status: 422
     end
   end
 
   def update
     if @client.update(client_params)
-      render json: @client, serializer: ClientSerializer
+      render json: @client, serializer: ClientSerializer, status: 200
     else
-      render json: { errors: @client.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: @client.errors.full_messages.join(', ') }, status: 422
     end
   end
 
   def destroy
     @client.destroy
-    head :no_content
+    head 204
   end
 
   private

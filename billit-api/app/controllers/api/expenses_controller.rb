@@ -15,23 +15,23 @@ class Api::ExpensesController < ApplicationController
   def create
     expense = current_user.expenses.build(expense_params)
     if expense.save
-      render json: expense, serializer: ExpenseSerializer, status: :created
+      render json: expense, serializer: ExpenseSerializer, status: 201
     else
-      render json: { errors: expense.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: expense.errors.full_messages.join(', ') }, status: 422
     end
   end
 
   def update
     if @expense.update(expense_params)
-      render json: @expense, serializer: ExpenseSerializer
+      render json: @expense, serializer: ExpenseSerializer, status: 200
     else
-      render json: { errors: @expense.errors.full_messages }, status: :unprocessable_entity
+      render json: { error: @expense.errors.full_messages.join(', ') }, status: 422
     end
   end
 
   def destroy
     @expense.destroy
-    head :no_content
+    head 204
   end
 
   private
