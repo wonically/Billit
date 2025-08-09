@@ -16,6 +16,7 @@ Rails.application.routes.draw do
       }
     resources :clients, only: [:index, :show, :create, :update, :destroy]
     resources :invoices
+    resources :expenses, only: [:index, :show, :create, :update, :destroy]
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
