@@ -5,5 +5,9 @@ class InvoiceSerializer < ActiveModel::Serializer
     object.client.name
   end
 
-  has_many :line_items
+  has_many :line_items, serializer: LineItemSerializer
+
+  def total
+    object.line_items.sum { |li| li.quantity * li.unit_price }
+  end
 end
