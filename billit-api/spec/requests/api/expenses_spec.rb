@@ -5,6 +5,11 @@ RSpec.describe 'Api::Expenses', type: :request do
   let!(:expenses) { create_list(:expense, 2, user: user) }
   let(:expense) { expenses.first }
   let!(:other_expense) { create(:expense) }
+  let(:user1) { create(:user) }
+  let(:user2) { create(:user) }
+  let!(:expense1) { create(:expense, user: user1) }
+  let!(:expense2) { create(:expense, user: user2) }
+  let(:headers) { user1.create_new_auth_token }
 
   before { sign_in user }
 
@@ -15,6 +20,12 @@ RSpec.describe 'Api::Expenses', type: :request do
       ids = json_body.map { |exp| exp['id'] }
       expect(ids).to match_array(expenses.map(&:id))
       expect(ids).not_to include(other_expense.id)
+    end
+
+    it "returns only expenses belonging to the authenticated user" do
+      get "/api/expenses", headers: headers
+      expect(json.size).to eq(1)
+      expect(json.first["id"]).to eq(expense1.id)
     end
   end
 
@@ -45,6 +56,11 @@ RSpec.describe 'Api::Expenses', type: :request do
       expect(response).to have_http_status(:created)
       expect(json_body['description']).to eq('Lunch')
     end
+
+    it "returns 403 Forbidden for non-admin users" do
+      post "/api/expenses", params: { expense: { description: "Test", amount: 10, category: "Office", expense_date: Date.today } }, headers: headers
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   describe 'PATCH /api/expenses/:id' do
@@ -57,6 +73,11 @@ RSpec.describe 'Api::Expenses', type: :request do
     it 'returns 404 for non-owned expense' do
       patch "/api/expenses/#{other_expense.id}", params: { expense: { description: 'Updated' } }
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 403 Forbidden for non-admin users" do
+      patch "/api/expenses/#{expense1.id}", params: { expense: { amount: 20 } }, headers: headers
+      expect(response).to have_http_status(:forbidden)
     end
   end
 
@@ -71,6 +92,11 @@ RSpec.describe 'Api::Expenses', type: :request do
     it 'returns 404 for non-owned expense' do
       delete "/api/expenses/#{other_expense.id}"
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 403 Forbidden for non-admin users" do
+      delete "/api/expenses/#{expense1.id}", headers: headers
+      expect(response).to have_http_status(:forbidden)
     end
   end
 end

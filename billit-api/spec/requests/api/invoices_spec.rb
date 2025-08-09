@@ -83,4 +83,41 @@ RSpec.describe 'Api::Invoices', type: :request do
       expect(response).to have_http_status(:no_content)
     end
   end
+
+  context 'user scoping and admin-only restrictions' do
+    let(:user1) { create(:user) }
+    let(:user2) { create(:user) }
+    let!(:invoice1) { create(:invoice, user: user1) }
+    let!(:invoice2) { create(:invoice, user: user2) }
+    let(:headers) { user1.create_new_auth_token }
+
+    describe 'GET /api/invoices' do
+      it 'returns only invoices belonging to the authenticated user' do
+        get '/api/invoices', headers: headers
+        expect(json.size).to eq(1)
+        expect(json.first['id']).to eq(invoice1.id)
+      end
+    end
+
+    describe 'POST /api/invoices' do
+      it 'returns 403 Forbidden for non-admin users' do
+        post '/api/invoices', params: { invoice: { client_id: invoice1.client_id, issue_date: Date.today, due_date: Date.today + 7, status: 'draft', total: 100 } }, headers: headers
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    describe 'PATCH /api/invoices/:id' do
+      it 'returns 403 Forbidden for non-admin users' do
+        patch "/api/invoices/#{invoice1.id}", params: { invoice: { status: 'paid' } }, headers: headers
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    describe 'DELETE /api/invoices/:id' do
+      it 'returns 403 Forbidden for non-admin users' do
+        delete "/api/invoices/#{invoice1.id}", headers: headers
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end

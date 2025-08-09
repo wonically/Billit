@@ -1,6 +1,7 @@
 class Api::ExpensesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_expense, only: [:show, :update, :destroy]
+  before_action :require_admin, only: [:create, :update, :destroy]
 
   def index
     expenses = current_user.expenses.recent
@@ -34,6 +35,12 @@ class Api::ExpensesController < ApplicationController
   end
 
   private
+
+  def require_admin
+    unless current_user.admin?
+      render json: { error: "Forbidden" }, status: :forbidden
+    end
+  end
 
   def set_expense
     @expense = current_user.expenses.find_by(id: params[:id])

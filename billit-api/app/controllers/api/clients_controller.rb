@@ -1,5 +1,7 @@
 class Api::ClientsController < ApplicationController
-  before_action :set_client, only: [:show, :update, :destroy]
+before_action :authenticate_user!
+before_action :set_client, only: [:show, :update, :destroy]
+before_action :require_admin, only: [:create, :update, :destroy]
 
   def index
     render json: current_user.clients, each_serializer: ClientSerializer
@@ -32,6 +34,12 @@ class Api::ClientsController < ApplicationController
   end
 
   private
+
+  def require_admin
+    unless current_user.admin?
+      render json: { error: "Forbidden" }, status: :forbidden
+    end
+  end
 
   def set_client
     @client = current_user.clients.find(params[:id])
