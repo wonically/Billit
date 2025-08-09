@@ -7,6 +7,8 @@ class Invoice < ApplicationRecord
 
   enum status: { draft: 0, sent: 1, paid: 2, overdue: 3 }
 
+  scope :for_user, ->(user) { where(user_id: user.id) }
+  
   validates :client, :due_date, :issue_date, :status, presence: true
   validate :due_date_after_issue_date
 
