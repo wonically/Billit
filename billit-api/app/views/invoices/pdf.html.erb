@@ -1,0 +1,13 @@
+<h1>Invoice <%= invoice.id %></h1>
+<p>Client: <%= invoice.client.name %></p>
+<p>Issue Date: <%= invoice.issue_date %></p>
+<p>Due Date: <%= invoice.due_date %></p>
+<p>Status: <%= invoice.status %></p>
+<p>Total: <%= invoice.total %></p>
+<ul>
+  <% invoice.line_items.each do |item| %>
+    <li>
+      <%= item.description %> - Qty: <%= item.quantity %> @ <%= item.unit_price %>
+    </li>
+  <% end %>
+</ul>

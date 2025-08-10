@@ -33,6 +33,16 @@ class Api::InvoicesController < ApplicationController
     head 204
   end
 
+  def export_pdf
+    invoice = Invoice.find(params[:id])
+    pdf = render_to_string(
+      pdf: "invoice-#{invoice.id}",
+      template: "invoices/pdf.html.erb",
+      locals: { invoice: invoice }
+    )
+    send_data pdf, filename: "invoice-#{invoice.id}.pdf", type: 'application/pdf', disposition: 'attachment'
+  end
+
   private
 
   def require_admin
