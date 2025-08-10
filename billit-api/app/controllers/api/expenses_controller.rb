@@ -4,8 +4,19 @@ class Api::ExpensesController < ApplicationController
   before_action :require_admin, only: [:create, :update, :destroy]
 
   def index
-    expenses = current_user.expenses.recent
-    render json: expenses, each_serializer: ExpenseSerializer
+    expenses = current_user.expenses
+    if params[:start_date].present? && params[:end_date].present?
+      expenses = expenses.where(expense_date: params[:start_date]..params[:end_date])
+    end
+    expenses = expenses.where(category: params[:category]) if params[:category].present?
+
+    if params[:monthly_total] == 'true'
+      monthly = expenses.group_by { |e| e.expense_date.strftime('%Y-%m') }
+      totals = monthly.transform_values { |arr| arr.sum { |e| e.amount } }
+      render json: totals
+    else
+      render json: expenses, each_serializer: ExpenseSerializer
+    end
   end
 
   def show
@@ -48,6 +59,6 @@ class Api::ExpensesController < ApplicationController
   end
 
   def expense_params
-    params.require(:expense).permit(:description, :amount, :category, :expense_date)
+    params.require(:expense).permit(:description, :amount, :category, :expense_date, :receipt)
   end
 end

@@ -3,6 +3,7 @@ require 'rails_helper'
 RSpec.describe Expense, type: :model do
   describe 'associations' do
     it { should belong_to(:user) }
+    it { should have_one_attached(:receipt) }
   end
 
   describe 'validations' do
