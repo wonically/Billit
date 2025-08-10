@@ -3,7 +3,11 @@ class Api::InvoicesController < ApplicationController
   before_action :require_admin, only: [:create, :update, :destroy]
 
   def index
-    render json: current_user.invoices, each_serializer: InvoiceSerializer
+    invoices = current_user.invoices
+    invoices = invoices.where(client_id: params[:client_id]) if params[:client_id].present?
+    invoices = invoices.where(status: params[:status]) if params[:status].present?
+    paginated = invoices.page(params[:page])
+    render json: paginated, each_serializer: InvoiceSerializer
   end
 
   def show
@@ -47,6 +51,12 @@ class Api::InvoicesController < ApplicationController
     invoice = Invoice.find(params[:id])
     InvoiceMailer.send_invoice(invoice, params[:email]).deliver_now
     render json: { message: "Invoice sent" }
+  end
+
+  def mark_as_paid
+    invoice = Invoice.find(params[:id])
+    invoice.update(payment_status: "paid")
+    render json: invoice, serializer: InvoiceSerializer
   end
 
   private

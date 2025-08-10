@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   end
 
   post '/invoices/:id/email', to: 'api/invoices#email_invoice'
+  patch '/invoices/:id/mark_as_paid', to: 'api/invoices#mark_as_paid'
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
