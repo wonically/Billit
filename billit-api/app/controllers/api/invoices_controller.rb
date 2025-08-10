@@ -43,6 +43,12 @@ class Api::InvoicesController < ApplicationController
     send_data pdf, filename: "invoice-#{invoice.id}.pdf", type: 'application/pdf', disposition: 'attachment'
   end
 
+  def email_invoice
+    invoice = Invoice.find(params[:id])
+    InvoiceMailer.send_invoice(invoice, params[:email]).deliver_now
+    render json: { message: "Invoice sent" }
+  end
+
   private
 
   def require_admin
