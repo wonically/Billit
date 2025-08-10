@@ -1,0 +1,7 @@
+<p>Hello <%= @invoice.client.name %>,</p>
+
+<p>Your invoice <strong>##<%= @invoice.id %></strong> was due on <strong><%= @invoice.due_date.strftime('%B %d, %Y') %></strong> and is now overdue.</p>
+
+<p>
+  <a href="<%= pay_invoice_url(@invoice) %>">Click here to pay your invoice</a>
+</p>
