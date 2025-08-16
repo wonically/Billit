@@ -40,5 +40,12 @@ module BillitApi
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Ensure Devise/Warden middleware is loaded for API authentication
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore
+    config.middleware.use Warden::Manager do |manager|
+      Devise.warden_config = manager
+    end
   end
 end

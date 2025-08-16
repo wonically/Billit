@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>Invoices</h2>
-    <Table>
+    <table class="min-w-full divide-y divide-gray-200">
       <thead>
         <tr>
           <th>Client</th>
@@ -25,18 +25,17 @@
           </td>
         </tr>
       </tbody>
-    </Table>
+    </table>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Table } from '@headlessui/vue'
 
 const invoices = ref([])
 
 async function fetchInvoices() {
-  const res = await fetch('/invoices')
+  const res = await fetch('http://localhost:3000/api/invoices')
   invoices.value = await res.json()
 }
 
